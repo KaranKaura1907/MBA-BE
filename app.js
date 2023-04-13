@@ -1,0 +1,204 @@
+const serverConfig= require('./configs/server.config');
+const express= require('express');
+const bodyParser= require('body-parser');
+const mongoose=require('mongoose');
+const bcrypt= require('bcryptjs')
+const dbConfig= require('./configs/db.config');
+const Movie= require('./models/movie.model');
+const Theatre= require('./models/theatre.model');
+const User= require('./models/user.model');
+const constants= require('./utils/constants')
+const app=express();
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended:true}));
+mongoose.connect(dbConfig.DB_URL,()=>{
+    console.log("Connected to MongodB");
+    init();
+},err=>{
+    console.log("Error:",err.message);
+})
+async function init(){
+    try
+    {
+        await User.collection.drop();
+        const user= await User.create({
+            name:'Karan',
+            userId:'admin',
+            email:'karan@gmail.com',
+            userType:'ADMIN',
+            password:bcrypt.hashSync('Welcome',8)
+        })
+        console.log("Admin user created successfully!")
+        await User.create({
+            name:'Anshul',
+            userId:'customer',
+            email:'anshul@gmail.com',
+            userType:constants.userTypes.customer,
+            password:bcrypt.hashSync('Welcome',8)
+        })
+        console.log("Customer user created successfully")
+    }
+    catch(e)
+    {
+        console.log(e.message)
+    }
+    let client1,client2,client3;
+    try
+    {
+        client1=await User.create({
+            name:"Client1",
+            userId:"client01",
+            email:"vivek1@gmail.com",
+            userType:constants.userTypes.client,
+            password:bcrypt.hashSync('Welcome',8)
+        })
+        client2=await User.create({
+            name:"Client2",
+            userId:"client02",
+            email:"vivek2@gmail.com",
+            userType:constants.userTypes.client,
+            password:bcrypt.hashSync('Welcome',8)
+        })
+        client3=await User.create({
+            name:"Client3",
+            userId:"client03",
+            email:"vivek3@gmail.com",
+            userType:constants.userTypes.client,
+            password:bcrypt.hashSync('Welcome',8)
+        })
+        console.log("Clients created successfully")
+    }
+    catch(e)
+    {
+        console.log(e.message)
+    }
+    await Movie.collection.drop();
+    try{
+        const movie1= await Movie.create({
+            name:"Bachhan Pandey",
+            description:"Comedy Masala Movie",
+            casts:["Akshay Kumar","Jacqueline Fernandiz"],
+            director:"Farhad Samji",
+            trailerUrl:"http://bacchanpandey/trailers/1",
+            posterUrl:"http://bacchanpandey/posters/1",
+            language:"Hindi",
+            releaseDate:"18-03-2022",
+            releaseStatus:"RELEASED"
+        });
+        const movie2= await Movie.create({
+            name:"Jalsa",
+            description:"Intense Drama Movie",
+            casts:["Vidya Balan","Shefali Shah"],
+            director:"Suresh Triveni",
+            trailerUrl:"http://jalsa/trailers/1",
+            posterUrl:"http://jalsa/posters/1",
+            language:"Hindi",
+            releaseDate:"18-03-2022",
+            releaseStatus:"RELEASED"
+        });
+        const movie3= await Movie.create({
+            name:"Jhund",
+            description:"Comedy Drama Movie",
+            casts:["Amitabh Bachchan","Abhinav Raj"],
+            director:"Nagraj Manjule",
+            trailerUrl:"http://jhund/trailers/1",
+            posterUrl:"http://jhund/posters/1",
+            language:"Hindi",
+            releaseDate:"04-03-2022",
+            releaseStatus:"RELEASED"
+        });
+        const movie4= await Movie.create({
+            name:"Radhey Shyam",
+            description:"Comedy Drama Movie",
+            casts:["Prabhas","Pooja Hegde"],
+            director:"Radha Krishna Kumar",
+            trailerUrl:"http://RadheyShyam/trailers/1",
+            posterUrl:"http://RadheyShyam/posters/1",
+            language:"Hindi",
+            releaseDate:"11-03-2022",
+            releaseStatus:"RELEASED"
+        });
+        const movie5= await Movie.create({
+            name:"The Kashmir Files",
+            description:"Intense Movie",
+            casts:["Mithun Chakraborty","Anupam Kher"],
+            director:"Vivek Agnihotri",
+            trailerUrl:"http://TheKashmirFiles/trailers/1",
+            posterUrl:"http://TheKashmirFiles/posters/1",
+            language:"Hindi",
+            releaseDate:"11-03-2022",
+            releaseStatus:"RELEASED"
+        });
+        console.log("Movies inserted in the dB");
+        await Theatre.collection.drop();
+        await Theatre.create({
+            name:"FunCinemas",
+            city:"Bangalore",
+            description:"Top class theatre",
+            pinCode:560052,
+            movies:[movie1._id,movie2._id,movie3._id],
+            ownerId:client1._id
+        });
+        await Theatre.create({
+            name:"PVR Cinemas - Kormangala",
+            city:"Bangalore",
+            description:"PVR franchise theatre",
+            pinCode:560095,
+            movies:[movie1._id,movie2._id,movie4._id],
+            ownerId:client1._id
+        });
+        await Theatre.create({
+            name:"IMax",
+            city:"Bangalore",
+            description:"IMax franchise theatre",
+            pinCode:560095,
+            movies:[movie1._id,movie2._id,movie3._id],
+            ownerId:client2._id
+        });
+        await Theatre.create({
+            name:"Vaibhav Theatre",
+            city:"Bangalore",
+            description:"Economical theatre",
+            pinCode:560094,
+            movies:[movie1._id,movie4._id],
+            ownerId:client2._id
+        });
+        await Theatre.create({
+            name:"Inox",
+            city:"Pune",
+            description:"Top class theatre",
+            pinCode:411001,
+            movies:[movie5._id,movie4._id],
+            ownerId:client3._id
+        });
+        await Theatre.create({
+            name:"Sonmarg Theatre",
+            city:"Pune",
+            description:"Economical theatre",
+            pinCode:411042,
+            movies:[movie3._id,movie2._id],
+            ownerId:client3._id
+        });
+        console.log("Theatres created")
+    } 
+    catch(e)
+    {
+        console.error(e.message)
+    }
+    
+}
+const movieRoutes= require('./routes/movie.routes');
+movieRoutes(app);
+const theatreRoutes= require('./routes/theatre.routes');
+theatreRoutes(app);
+const authRoutes= require('./routes/auth.routes')
+authRoutes(app);
+const userRoutes= require('./routes/user.routes');
+userRoutes(app);
+const bookingRoutes= require('./routes/booking.routes');
+bookingRoutes(app);
+const paymentRoutes=require('./routes/payment.routes');
+paymentRoutes(app);
+app.listen(serverConfig.PORT,()=>{
+    console.log(`Application Started on the Port Number:${serverConfig.PORT} `)
+})
